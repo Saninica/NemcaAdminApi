@@ -1,12 +1,19 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-import os
+from src.core.config import settings
 
-DATABASE_URL = os.getenv("DATABASE_URL", "mysql+mysqlclient://username:password@localhost/nemcaAdmin")
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(
+    settings.DATABASE_URI,
+    echo=True,
+    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URI else {}
+)
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
+async_session = sessionmaker(
+    engine, expire_on_commit=False, class_=AsyncSession
+)
+
+async def get_db():
+    async with async_session() as session:
+        yield session

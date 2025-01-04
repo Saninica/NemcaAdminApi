@@ -3,3 +3,7 @@ api-nemca
 .env
 
 __pycache__
+
+alembic.ini
+
+alembic

@@ -1,7 +1,12 @@
 fastapi
 alembic
-sqlalchemy
 uvicorn
 pydantic
 python-jose
-mysqlclient
+psycopg
+asyncpg
+sqlalchemy[asyncio]
+pydantic-settings
+pydantic[email]
+python-multipart
+passlib
