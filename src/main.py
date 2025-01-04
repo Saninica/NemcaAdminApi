@@ -5,7 +5,7 @@ from src.routes import api_router
 app = FastAPI(title="Nemca Admin API", version="1.0.0")
 
 
-app.include_router(api_router)
+app.include_router(prefix="/api", router=api_router)
 
 
 app.add_middleware(

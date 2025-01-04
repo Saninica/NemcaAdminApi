@@ -22,7 +22,7 @@ from src.crud.user import crud_user
 
 router = APIRouter()
 
-@router.post("/auth/register/", response_model=UserRead)
+@router.post("/register/", response_model=UserRead)
 async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
     db_user = await crud_user.get_user_by_username(db, username=user.username)
     if db_user:
@@ -38,7 +38,7 @@ async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
 
     return created_user
 
-@router.post("/auth/login/", response_model=Token)
+@router.post("/login/", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     user = await crud_user.get_user_by_username(db, username=form_data.username)
 
@@ -57,6 +57,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     )
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 
-@router.get("/auth/", response_model=UserRead)
+@router.get("/", response_model=UserRead)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
