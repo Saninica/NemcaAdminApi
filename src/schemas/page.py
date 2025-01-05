@@ -23,7 +23,7 @@ class PageContentSchema(BaseModel):
     body: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PageSchema(BaseModel):
     id: int
@@ -31,7 +31,7 @@ class PageSchema(BaseModel):
     contents: Optional[List[PageContentSchema]] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PageContentCreate(BaseModel):
     page_id: int
