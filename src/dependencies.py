@@ -6,7 +6,7 @@ from src.crud.user import crud_user
 from src.auth.jwt import verify_access_token
 from src.schemas.auth import TokenData
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/login")
 
 
 

@@ -1,8 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.routes import api_router
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
 
 app = FastAPI(title="Nemca Admin API", version="1.0.0")
+
+media_dir =  Path = Path(__file__).resolve().parent.parent / "media"
+media_url = f"/media"
+
+app.mount(media_url, StaticFiles(directory=media_dir), name="media")
 
 
 app.include_router(prefix="/api", router=api_router)

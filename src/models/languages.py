@@ -8,3 +8,5 @@ class Language(Base):
 
     code = Column(String(2), primary_key=True, index=True)  # e.g., 'en', 'tr'
     name = Column(String(50), unique=True, nullable=False)  # e.g., 'English', 'Turkish'
+    website_id = Column(Integer, ForeignKey("websites.id", ondelete="CASCADE"), nullable=False, index=True)
+    website = relationship("Website")

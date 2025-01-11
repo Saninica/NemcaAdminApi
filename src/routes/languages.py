@@ -8,26 +8,26 @@ from src.dependencies import get_current_user, get_db
 
 router = APIRouter()
 
-@router.post("/", response_model=LanguageRead, dependencies=[Depends(get_current_user)])
+@router.post("/", response_model=LanguageRead)
 async def create_lang(lang: LanguageCreate, db: AsyncSession = Depends(get_db)):
     created_lang = await crud_lang.create(db, obj_in=lang)
     return created_lang
 
 
-@router.get("/{lang_id}", response_model=LanguageRead, dependencies=[Depends(get_current_user)])
+@router.get("/{lang_id}", response_model=LanguageRead)
 async def read_lang(lang_id: int, db: AsyncSession = Depends(get_db)):
     lang = await crud_lang.get(db, id=lang_id)
     if not lang:
         raise HTTPException(status_code=404, detail="Language not found")
     return lang
 
-@router.get("/", response_model=List[LanguageRead], dependencies=[Depends(get_current_user)])
+@router.get("/", response_model=List[LanguageRead])
 async def read_langs(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     langs = await crud_lang.get_multi(db, skip=skip, limit=limit)
     return langs
 
 
-@router.delete("/{lang_id}", response_model=dict, dependencies=[Depends(get_current_user)])
+@router.delete("/{lang_id}", response_model=dict)
 async def delete_lang(lang_id: int, db: AsyncSession = Depends(get_db)):
     lang = await crud_lang.remove(db, id=lang_id)
     if not lang:
