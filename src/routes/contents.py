@@ -19,7 +19,7 @@ def page_content_update_form(website_id: int = Form(...), language_code: str = F
 @router.post("/", response_model=PageContentCreate)
 async def create_page_content(page: PageContentCreate = Depends(page_content_form), cover_image: UploadFile = File(None), db: AsyncSession = Depends(get_db)):
     if cover_image:
-        page.cover_image = await crud_page_content.upload_cover_image(cover_image, db)
+        page.cover_image = await crud_page_content.upload_cover_image(cover_image)
 
     created_page = await crud_page_content.create(db, obj_in=page)
     return created_page
