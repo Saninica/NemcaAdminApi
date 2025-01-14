@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.routes import api_router
+from src.core.config import settings
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
@@ -21,7 +22,9 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://localhost:5174",
-        "http://localhost:3000"
+        "http://localhost:3000",
+        settings.SERVER_IP
+
     ],
     allow_credentials=True,
     allow_methods=["*"],

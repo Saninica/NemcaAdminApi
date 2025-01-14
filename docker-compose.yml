@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8002:8002"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    environment:
+      - ENV=production
+    volumes:
+      - ./:/app
+    networks:
+      - app-network
+
+
+networks:
+  app-network:
+    driver: bridge

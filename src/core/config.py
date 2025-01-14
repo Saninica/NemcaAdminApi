@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    SERVER_IP: str = "0.0.0.0"
+
     class Config:
         env_file = ".env"
 
