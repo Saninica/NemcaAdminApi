@@ -4,3 +4,4 @@ from .languages import Language
 from .metatags import MetaTag
 from .website import Website
 from .announcements import Announcement
+from .blogs import Blog

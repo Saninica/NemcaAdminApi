@@ -1,17 +1,39 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class Announcement(BaseModel):
+    id: int
     title: str
-    content: str
+    body: str
     cover_image: str
+    start_date: datetime
+    end_date: datetime
+    created_at: datetime
+    page_id: int
+    website_id: int
+    language_code: str
 
 
-class AnnouncementCreate(Announcement):
-    pass
+class AnnouncementCreate(BaseModel):
+    title: str
+    body: str
+    cover_image: str
+    start_date: datetime
+    end_date: datetime
+    page_id: int
+    website_id: int
+    language_code: str
 
-class AnnouncementUpdate(Announcement):
-    pass
+class AnnouncementUpdate(BaseModel):
+    title: str
+    body: str
+    cover_image: str
+    start_date: datetime
+    end_date: datetime
+    page_id: int
+    website_id: int
+    language_code: str
 
 class AnnouncementRead(Announcement):
     id: int
