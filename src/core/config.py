@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     SERVER_IP: str = "0.0.0.0"
+    ROOT_PATH: str = "/api"
 
     class Config:
         env_file = ".env"

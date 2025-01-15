@@ -5,9 +5,6 @@ services:
     build: .
     ports:
       - "8002:8002"
-    depends_on:
-      - db
-      - redis
     env_file:
       - .env
     environment:

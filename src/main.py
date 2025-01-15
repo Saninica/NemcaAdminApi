@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 
-app = FastAPI(title="Nemca Admin API", version="1.0.0")
+app = FastAPI(title="Nemca Admin API", version="1.0.0", root_path="/admin-api")
 
 media_dir =  Path = Path(__file__).resolve().parent.parent / "media"
 media_url = f"/media"
@@ -23,8 +23,9 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:3000",
-        settings.SERVER_IP
-
+        settings.SERVER_IP,
+        "http://localhost",
+        "http://localhost:3003"
     ],
     allow_credentials=True,
     allow_methods=["*"],
