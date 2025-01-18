@@ -45,7 +45,6 @@ async def delete_lang(lang_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.put("/", response_model=LanguageRead)
 async def update_lang(lang: LanguageUpdate, query: LanguageUpdateParams = Depends(), db: AsyncSession = Depends(get_db)):
-    raise HTTPException(status_code=404, detail="Language not found")
     db_lang = await crud_lang.get(db, id=None, filters={"code": query.lang, "website_id": int(query.website)})
 
     if not db_lang:
