@@ -30,3 +30,10 @@ async def update_metatag(metatag_id: int, metatag: MetatagsUpdate, db: AsyncSess
         raise HTTPException(status_code=404, detail="Metatag not found")
     updated_metatag = await crud_metatags.update(db, db_obj=db_metatag, obj_in=metatag)
     return updated_metatag
+
+@router.delete("/{metatag_id}/", response_model=Metatags)
+async def delete_metatag(metatag_id: int, db: AsyncSession = Depends(get_db)):
+    db_metatag = await crud_metatags.get(db, id=metatag_id)
+    if not db_metatag:
+        raise HTTPException(status_code=404, detail="Metatag not found")
+    return await crud_metatags.remove(db, id=metatag_id)

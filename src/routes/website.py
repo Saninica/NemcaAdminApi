@@ -43,3 +43,11 @@ async def update_website(website_id: int, name: str, domain_url: str, favicon_im
     website = WebsiteUpdate(name=name, domain_url=domain_url, favicon_image=favicon_path)
 
     return await crud_website.update(db, db_obj=db_web, obj_in=website)
+
+
+@router.delete("/{website_id}/", response_model=WebsiteBase)
+async def delete_website(website_id: int, db: AsyncSession = Depends(get_db)):
+    db_web = await crud_website.get(db, id=website_id)
+    if not db_web:
+        raise HTTPException(status_code=404, detail="Website not found")
+    return await crud_website.remove(db, id=website_id)

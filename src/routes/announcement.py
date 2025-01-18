@@ -44,6 +44,6 @@ async def update_announcement(announcement_id: int, announcement: AnnouncementUp
 
     return await crud_announcement.update(db, db_obj=db_announcement, obj_in=announcement)
 
-@router.delete("/{announcement_id}", response_model=Announcement)
+@router.delete("/{announcement_id}/", response_model=Announcement)
 async def delete_announcement(announcement_id: int, db: AsyncSession = Depends(get_db)):
     return await crud_announcement.remove(db, id=announcement_id)

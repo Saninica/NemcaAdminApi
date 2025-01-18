@@ -34,7 +34,7 @@ async def update_page(page_id: int, page: PageUpdate, db: AsyncSession = Depends
     updated_page = await crud_page.update(db, db_obj=db_page, obj_in=page)
     return updated_page
 
-@router.delete("/{page_id}", response_model=dict)
+@router.delete("/{page_id}/", response_model=dict)
 async def delete_page(page_id: int, db: AsyncSession = Depends(get_db)):
     page = await crud_page.remove(db, id=page_id)
     if not page:
