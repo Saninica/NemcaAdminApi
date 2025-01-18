@@ -39,7 +39,10 @@ def get_models_metadata(models: List[Type[Base]]) -> Dict[str, Dict[str, FieldMe
 
             try: del fields["id"]
             except: pass
-            
+
+            try: del fields["created_at"]
+            except: pass
+
             metadata[model_name] = fields
         except Exception as e:
             print(f"Error inspecting model {model_name}: {e}")

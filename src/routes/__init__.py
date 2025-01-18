@@ -8,6 +8,7 @@ from src.routes import website
 from src.routes import announcement
 from src.routes import metatags
 from src.routes import blogs
+from src.routes import tinyfile
 from src.dependencies import get_current_user
 from fastapi import Depends
 
@@ -24,3 +25,4 @@ api_router.include_router(website.router, prefix="/website", tags=["website"],  
 api_router.include_router(announcement.router, prefix="/announcement", tags=["announcement"],  dependencies=[Depends(get_current_user)])
 api_router.include_router(metatags.router, prefix="/metatag", tags=["metatag"],  dependencies=[Depends(get_current_user)])
 api_router.include_router(blogs.router, prefix="/blog", tags=["blog"],  dependencies=[Depends(get_current_user)])
+api_router.include_router(tinyfile.router, prefix="/tinyfile", tags=["tinyfile"])

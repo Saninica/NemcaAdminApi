@@ -75,17 +75,40 @@ class CRUDBase(
                 stmt = stmt.order_by(asc(sort_column))
         
         stmt = stmt.offset(skip).limit(limit)
+
+        print("Query:", stmt.compile(compile_kwargs={"literal_binds": True}))
         result = await db.execute(stmt)
         return result.scalars().all()
 
-    async def get(self, db: AsyncSession, id: Any) -> Optional[ModelType]:
-        result = await db.execute(select(self.model).where(self.model.id == id))
+    async def get(self, db: AsyncSession, id: Any, filters: Optional[List[Any]] = None,
+    load_relations: Optional[List[Any]] = None) -> Optional[ModelType]:    
+        stmt = select(self.model)
+
+        if load_relations:
+            stmt = stmt.options(*[selectinload(rel) for rel in load_relations])
+
+        if id:
+            stmt = stmt.where(self.model.id == id)
+
+
+        if filters:
+            for field, value in filters.items():
+                stmt = stmt.where(getattr(self.model, field) == value)
+
+        
+
+        result = await db.execute(stmt)
         return result.scalars().first()
 
     async def get_multi(
-        self, db: AsyncSession, *, skip: int = 0, limit: int = 100
+        self, db: AsyncSession, *, skip: int = 0, limit: int = 100,
+        load_relations: Optional[List[Any]] = None
     ) -> List[ModelType]:
-        result = await db.execute(select(self.model).offset(skip).limit(limit))
+        if load_relations:
+            stmt = select(self.model).options(*[selectinload(rel) for rel in load_relations])
+        else:
+            stmt = select(self.model)
+        result = await db.execute(stmt.offset(skip).limit(limit))
         return result.scalars().all()
 
     async def get_by_field(

@@ -14,7 +14,7 @@ async def create_page(page: PageCreate, db: AsyncSession = Depends(get_db)):
     return created_page
 
 
-@router.get("/{page_id}", response_model=PageRead)
+@router.get("/{page_id}/", response_model=PageRead)
 async def read_page(page_id: int, db: AsyncSession = Depends(get_db)):
     page = await crud_page.get_with_contents(db, id=page_id)
     if not page:
@@ -26,7 +26,7 @@ async def read_pages(skip: int = 0, limit: int = 100, db: AsyncSession = Depends
     pages = await crud_page.get_multi_with_contents(db, skip=skip, limit=limit)
     return pages
 
-@router.put("/{page_id}", response_model=PageRead)
+@router.put("/{page_id}/", response_model=PageRead)
 async def update_page(page_id: int, page: PageUpdate, db: AsyncSession = Depends(get_db)):
     db_page = await crud_page.get(db, id=page_id)
     if not db_page:

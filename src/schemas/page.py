@@ -56,9 +56,26 @@ class PageContentUpdate(BaseModel):
     body: str
     cover_image: Optional[str]
 
-class PageContentRead(PageContentSchema):
+class PageContentRead(BaseModel):
     id: int
     page_id: int
+    website_id: int
+    language_code: str
+    title: str
+    body: str
+    cover_image: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+class PageContentMultiple(BaseModel):
+    id: int
+    page: str
+    website: str
+    language_code: str
+    title: str
+    body: str
+    cover_image: Optional[str]
 
     class Config:
         from_attributes = True

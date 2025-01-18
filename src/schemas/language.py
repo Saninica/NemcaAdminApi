@@ -8,6 +8,9 @@ class LanguageBase(BaseModel):
 class LanguageCreate(LanguageBase):
     pass
 
+class LanguageUpdate(LanguageBase):
+    pass
+
 class LanguageRead(LanguageBase):
     class Config:
         from_attributes = True

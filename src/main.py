@@ -6,17 +6,16 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 
-app = FastAPI(title="Nemca Admin API", version="1.0.0", root_path="/admin-api")
+app = FastAPI(title="Nemca Admin API", version="1.0.0")
 
-media_dir =  Path = Path(__file__).resolve().parent.parent / "media"
+media_dir = Path(__file__).resolve().parent.parent / "media"
 media_url = f"/media"
 
 app.mount(media_url, StaticFiles(directory=media_dir), name="media")
 
 
+app.root_path = settings.ROOT_PATH
 app.include_router(prefix="/api", router=api_router)
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
