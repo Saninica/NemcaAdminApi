@@ -8,9 +8,9 @@ class Blog(Base):
     __tablename__ = "blogs"
 
     id = Column(Integer, primary_key=True, index=True)
-    body = Column(Text, unique=True, index=True, nullable=True)
+    body = Column(Text, index=True, nullable=True)
     website_id = Column(Integer, ForeignKey("websites.id", ondelete="CASCADE"), nullable=True, index=True)
-    language_code = Column(String(2), ForeignKey("languages.code", ondelete="CASCADE"), nullable=True, index=True)
+    language_id = Column(Integer, ForeignKey("languages.id", ondelete="CASCADE"), nullable=True, index=True)
     page_id = Column(Integer, ForeignKey("pages.id", ondelete="CASCADE"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     

@@ -10,6 +10,8 @@ class UserCreate(UserBase):
 
 class UserRead(UserBase):
     id: int
+    is_superuser: bool
+    websites: list = []
 
     class Config:
         from_attributes = True

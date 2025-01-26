@@ -1,7 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
 from collections import defaultdict
 
 from src.crud.base import CRUDBase
@@ -10,7 +9,7 @@ from src.schemas.page import PageCreate, PageUpdate
 
 
 class CRUDPage(CRUDBase[Page, PageCreate, PageUpdate]):
-    async def get_with_contents(self, db: AsyncSession, id: int) -> Optional[Page]:
+    async def get_with_contents(self, db: AsyncSession, id: int, filters: Optional[Dict[str, Any]] = None) -> Optional[Page]:
         """
         Retrieve a Page by its ID and attach its related PageContent instances.
         """
@@ -20,9 +19,15 @@ class CRUDPage(CRUDBase[Page, PageCreate, PageUpdate]):
             return None
 
         # Fetch related PageContent instances
-        result = await db.execute(
-            select(PageContent).where(PageContent.page_id == id)
-        )
+        result = None
+        if filters:
+            result = await db.execute(
+                select(PageContent).where(PageContent.page_id == id).filter_by(**filters)
+            )
+        else:
+            result = await db.execute(
+                select(PageContent).where(PageContent.page_id == id)
+            )
         contents = result.scalars().all()
 
         # Dynamically attach contents to the Page object
@@ -31,15 +36,22 @@ class CRUDPage(CRUDBase[Page, PageCreate, PageUpdate]):
         return page
 
     async def get_multi_with_contents(
-        self, db: AsyncSession, *, skip: int = 0, limit: int = 100
+        self, db: AsyncSession, *, skip: int = 0, limit: int = 100, filters: Optional[Dict[str, Any]] = None
     ) -> List[Page]:
         """
         Retrieve multiple Pages and attach their related PageContent instances.
         """
         # Fetch Pages with pagination
-        result = await db.execute(
-            select(Page).offset(skip).limit(limit)
-        )
+        result = None
+        if filters:
+            result = await db.execute(
+                select(Page).offset(skip).limit(limit).filter_by(**filters)
+            )
+        else:
+            result = await db.execute(
+                select(Page).offset(skip).limit(limit)
+            )
+            
         pages = result.scalars().all()
         if not pages:
             return pages

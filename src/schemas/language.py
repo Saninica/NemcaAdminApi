@@ -12,5 +12,7 @@ class LanguageUpdate(LanguageBase):
     pass
 
 class LanguageRead(LanguageBase):
+    id: int
+
     class Config:
         from_attributes = True

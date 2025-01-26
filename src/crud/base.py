@@ -80,7 +80,7 @@ class CRUDBase(
         result = await db.execute(stmt)
         return result.scalars().all()
 
-    async def get(self, db: AsyncSession, id: Any, filters: Optional[List[Any]] = None,
+    async def get(self, db: AsyncSession, id: Any = 0, filters: Optional[List[Any]] = None,
     load_relations: Optional[List[Any]] = None) -> Optional[ModelType]:    
         stmt = select(self.model)
 
@@ -102,7 +102,7 @@ class CRUDBase(
 
     async def get_multi(
         self, db: AsyncSession, *, skip: int = 0, limit: int = 100,
-        load_relations: Optional[List[Any]] = None
+        load_relations: Optional[List[Any]] = None, filters: Optional[Dict[str, Any]] = None
     ) -> List[ModelType]:
         if load_relations:
             stmt = select(self.model).options(*[selectinload(rel) for rel in load_relations])
@@ -142,8 +142,6 @@ class CRUDBase(
         """
         Create a new record. If obj_in is provided, use it; otherwise, use kwargs.
         """
-        print(obj_in)
-        print("^^^^^^^^^^^^^^^^")
         if obj_in:
             obj_in_data = obj_in.dict(exclude_unset=True)
             db_obj = self.model(**obj_in_data)  # type: ignore
@@ -177,8 +175,8 @@ class CRUDBase(
             await db.refresh(db_obj)
         return db_obj
 
-    async def remove(self, db: AsyncSession, *, id: int) -> Optional[ModelType]:
-        obj = await self.get(db, id)
+    async def remove(self, db: AsyncSession, *, id: int, filters: Optional[Dict[str, Any]] = None) -> Optional[ModelType]:
+        obj = await self.get(db, id, filters=filters)
         if obj:
             await db.delete(obj)
             await db.commit()

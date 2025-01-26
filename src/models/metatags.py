@@ -11,7 +11,7 @@ class MetaTag(Base):
     description = Column(Text, nullable=True)
     keywords = Column(Text, nullable=True)
     page_id = Column(Integer, ForeignKey("pages.id", ondelete="CASCADE"), nullable=False, index=True)
-    language_code = Column(String(2), ForeignKey("languages.code", ondelete="CASCADE"), nullable=False, index=True)
+    language_id = Column(Integer, ForeignKey("languages.id", ondelete="CASCADE"), nullable=False, index=True)
     website_id = Column(Integer, ForeignKey("websites.id", ondelete="CASCADE"), nullable=False, index=True)
     website = relationship("Website")
     page = relationship("Page")

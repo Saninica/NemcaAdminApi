@@ -7,7 +7,7 @@ class Page(Base):
     __tablename__ = "pages"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(50), unique=True, nullable=False)  # e.g., 'home', 'about_us'
+    name = Column(String(50), nullable=False)  # e.g., 'home', 'about_us'
     website_id = Column(Integer, ForeignKey("websites.id", ondelete="CASCADE"), nullable=False, index=True)
     website = relationship("Website")
 
@@ -23,7 +23,7 @@ class PageContent(Base):
     body = Column(Text, nullable=False)
     cover_image = Column(String(255), nullable=True)
     page_id = Column(Integer, ForeignKey("pages.id", ondelete="CASCADE"), nullable=False, index=True)
-    language_code = Column(String(2), ForeignKey("languages.code", ondelete="CASCADE"), nullable=False, index=True)
+    language_id = Column(Integer, ForeignKey("languages.id", ondelete="CASCADE"), nullable=False, index=True)
     website_id = Column(Integer, ForeignKey("websites.id", ondelete="CASCADE"), nullable=False, index=True)
     page = relationship("Page")
     language = relationship("Language")

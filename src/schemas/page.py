@@ -4,7 +4,7 @@ from typing import List, Optional
 
 class PageBase(BaseModel):
     name: str  # e.g., 'home', 'about_us'
-    website_id: int
+    website_id: Optional[int] = 0
 
 class PageCreate(PageBase):
     pass
@@ -43,15 +43,16 @@ class PageSchema(BaseModel):
 class PageContentCreate(BaseModel):
     page_id: int
     website_id: int
-    language_code: str
+    language_id: int
     title: str
     body: str
     cover_image: Optional[str] = None
 
 
 class PageContentUpdate(BaseModel):
+    page_id: int
     website_id: int
-    language_code: str
+    language_id: int
     title: str
     body: str
     cover_image: Optional[str]

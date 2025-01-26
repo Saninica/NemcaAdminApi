@@ -24,10 +24,11 @@ router = APIRouter()
 
 @router.post("/register/", response_model=UserRead)
 async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
-    db_user = await crud_user.get_user_by_username(db, username=user.username)
+    db_user = await crud_user.get(db, filters={"username": user.username})
     if db_user:
         raise HTTPException(status_code=400, detail="Kullanıcı adı zaten kullanılıyor.")
-    db_user = await crud_user.get_user_by_email(db, email=user.email)
+
+    db_user = await crud_user.get(db, filters={"email": user.email})
     if db_user:
         raise HTTPException(status_code=400, detail="Email zaten kullanılıyor.")
     
@@ -40,7 +41,7 @@ async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login/", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    user = await crud_user.get_user_by_username(db, username=form_data.username)
+    user = await crud_user.get(db, filters={"username": form_data.username}, load_relations=[User.websites])
 
     if not user:
         raise HTTPException(status_code=400, detail="Kullanıcı adı veya şifre yanlış.")
@@ -55,8 +56,25 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
         data={"sub": user.username},
         expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer", "user": user}
+    
+    websites_data = [{"id": website.id, "name": website.name} for website in user.websites]
+
+    user_data = UserRead(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        is_active=user.is_active,
+        is_superuser=user.is_superuser,
+        websites=websites_data
+    )
+
+    return {"access_token": access_token, "token_type": "bearer", "user": user_data}
 
 @router.get("/", response_model=UserRead)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.post("/website/", response_model=UserRead)
+async def create_website(website_id: int,current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    data = await crud_user.create_website_for_user(db, website_id=website_id, user=current_user)
+    return data

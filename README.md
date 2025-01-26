@@ -21,8 +21,8 @@ To autogenerate migrations based on your models, you should run:
 
 `alembic upgrade head` # To apply the new migration
 
--- blog modeli ve  blog içeriği rich text editor olmali.
--- duyurular kısmı olmalı popup olarak ekranda çıkacak
--- website eklenebilir olmalı ve bu sitenin tema ayarlarıda admin panelden yönetilmeli.
--- siteye ait görseller admin panelde eklenebilir olmalı. Gruplanabilir gibi.
+
 -- kullanıcı yetkileri site bazlı olmalı. Super admin tüm siteleri yönetebilir.
+-- content modeline price field eklenmesi gerekli.
+-- birden fazla görsel yüklenebilecek resim dosyası olabilir.
+-- randevu sistemi entegrasyonu gerekli.
