@@ -49,7 +49,7 @@ async def update_blog(blog_id: int, title: str, content: str, db: AsyncSession =
     return await crud_blog.update(db, db_obj=db_blog, obj_in=blog)
 
 
-@router.delete("/{blog_id}")
+@router.delete("/{blog_id}/")
 async def delete_blog(blog_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.is_superuser is False:
         return await crud_blog.remove(db, id=blog_id, filters={"website_id": current_user.websites[0].id})
