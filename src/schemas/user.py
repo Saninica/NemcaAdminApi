@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from src.schemas.website import WebsiteSchema
 
 class UserBase(BaseModel):
     username: str
@@ -11,7 +12,7 @@ class UserCreate(UserBase):
 class UserRead(UserBase):
     id: int
     is_superuser: bool
-    websites: list = []
+    websites: list[WebsiteSchema] = []
 
     class Config:
         from_attributes = True

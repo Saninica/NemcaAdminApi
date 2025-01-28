@@ -22,6 +22,7 @@ async def read_blogs(db: AsyncSession = Depends(get_db), current_user: User = De
 async def create_blog(data: BlogCreate, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.is_superuser is False:
         data.website_id = current_user.websites[0].id
+
     return await crud_blog.create(db, obj_in=data)
 
 

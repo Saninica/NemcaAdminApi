@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class MetatagsBase(BaseModel):
     title: str
@@ -8,13 +9,13 @@ class MetatagsBase(BaseModel):
 
 class MetatagsCreate(MetatagsBase):
     page_id: int
-    website_id: int
-    language_code: str
+    website_id: Optional[int] = None
+    language_id: int
 
 
 class MetatagsUpdate(MetatagsBase):
     page_id: int
-    language_code: str
+    language_id: int
     website_id: int
 
 

@@ -19,6 +19,11 @@ class WebsiteUpdate(WebsiteBase):
 class WebsiteRead(WebsiteBase):
     id: int
 
+class WebsiteSchema(BaseModel):
+    id: int
+    name: str
+
+
 
 class PageSchema(BaseModel):
     id: int

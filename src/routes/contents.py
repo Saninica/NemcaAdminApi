@@ -11,7 +11,7 @@ from src.schemas.queryparams import PageContentQueryParams
 
 router = APIRouter()
 
-def page_content_form(page_id: int = Form(...), language_id: int = Form(...), title: str = Form(...), body: str = Form(...), website_id: int = Form(...)):
+def page_content_form(page_id: int = Form(...), language_id: int = Form(...), title: str = Form(...), body: str = Form(...), website_id: Optional[int] = Form(None)):
     return PageContentCreate(page_id=page_id, language_id=language_id, website_id=website_id, title=title, body=body)
 
 

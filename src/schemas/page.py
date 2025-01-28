@@ -42,7 +42,7 @@ class PageSchema(BaseModel):
 
 class PageContentCreate(BaseModel):
     page_id: int
-    website_id: int
+    website_id: Optional[int] = None
     language_id: int
     title: str
     body: str

@@ -12,7 +12,7 @@ router = APIRouter()
 @router.get("/", response_model=List[WebsiteRead])
 async def read_websites(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.is_superuser is False:
-        return await crud_website.get_multi(db, filters={"website_id": current_user.websites[0].id})
+        return await crud_website.get_multi(db, filters={"id": current_user.websites[0].id})
     return await crud_website.get_multi(db)
 
 

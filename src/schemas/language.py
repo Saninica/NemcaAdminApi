@@ -1,9 +1,10 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class LanguageBase(BaseModel):
     code: str  # e.g., 'en', 'tr'
     name: str  # e.g., 'English', 'Turkish'
-    website_id: int
+    website_id: Optional[int] = None
 
 class LanguageCreate(LanguageBase):
     pass

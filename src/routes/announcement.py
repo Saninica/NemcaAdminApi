@@ -6,17 +6,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import UploadFile, File
 from fastapi import Form
+from typing import Optional
 from src.models.user import User
 
 
 router = APIRouter()
 
 def announcement_create_form(page_id: int = Form(...), 
-    language_code: str = Form(...), title: str = Form(...), body: str = Form(...),
-    start_date: str = Form(...), end_date: str = Form(...)):
-    return AnnouncementCreate(page_id=page_id, language_code=language_code, 
+    language_id: int = Form(...), title: str = Form(...), body: str = Form(...),
+    start_date: str = Form(...), end_date: str = Form(...), website_id: Optional[int] = Form(None)):
+    return AnnouncementCreate(page_id=page_id, language_id=language_id, 
     title=title, body=body,cover_image="",
-    start_date=start_date, end_date=end_date)
+    start_date=start_date, end_date=end_date, website_id=website_id)
 
 
 @router.get("/", response_model=list[Announcement])
@@ -41,9 +42,12 @@ async def create_announcement(announcement: AnnouncementCreate = Depends(announc
         announcement.cover_image = await crud_announcement.upload_cover_image(cover_image)
 
     if current_user.is_superuser is False:
-        return await crud_announcement.create(db, obj_in=announcement, filters={"website_id": current_user.websites[0].id})
-        
-    return await crud_announcement.create(db, obj_in=announcement)
+        announcement.website_id = current_user.websites[0].id
+    else:
+        announcement.website_id = announcement.website_id
+
+    created_announcement = await crud_announcement.create(db, obj_in=announcement)
+    return created_announcement
 
 
 @router.put("/{announcement_id}/", response_model=Announcement)
