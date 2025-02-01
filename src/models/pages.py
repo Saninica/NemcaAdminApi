@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, String, Text
+from sqlalchemy import Column, Integer, ForeignKey, String, Text, Float
 from sqlalchemy.orm import relationship
 from src.database.base_class import Base
 
@@ -21,6 +21,7 @@ class PageContent(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String(100), nullable=False)
     body = Column(Text, nullable=False)
+    price = Column(Float, nullable=True)
     cover_image = Column(String(255), nullable=True)
     page_id = Column(Integer, ForeignKey("pages.id", ondelete="CASCADE"), nullable=False, index=True)
     language_id = Column(Integer, ForeignKey("languages.id", ondelete="CASCADE"), nullable=False, index=True)

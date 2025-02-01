@@ -17,6 +17,8 @@ class UserRead(UserBase):
     class Config:
         from_attributes = True
 
+class UserRegister(UserBase):
+    pass
 
 class UserUpdate(BaseModel):
     username: str

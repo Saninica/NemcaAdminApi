@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.sql import func
 from typing import List, Optional
-from src.schemas.page import PageContentCreate, PageContentRead, PageContentUpdate, PageContentMultiple
+from src.schemas.page import PageContentCreate, PageContentRead, PageContentUpdate, PaginatedPageContentResponse
 from src.crud.contents import crud_page_content
 from src.dependencies import  get_db, get_current_user
 from fastapi import UploadFile, File, Form
@@ -9,14 +11,16 @@ from src.models import PageContent, User
 from src.schemas.queryparams import PageContentQueryParams
 
 
+
 router = APIRouter()
 
-def page_content_form(page_id: int = Form(...), language_id: int = Form(...), title: str = Form(...), body: str = Form(...), website_id: Optional[int] = Form(None)):
-    return PageContentCreate(page_id=page_id, language_id=language_id, website_id=website_id, title=title, body=body)
+def page_content_form(page_id: int = Form(...), language_id: int = Form(...), title: str = Form(...), body: str = Form(...), website_id: Optional[int] = Form(None),
+    price: Optional[float] = Form(None)):
+    return PageContentCreate(page_id=page_id, language_id=language_id, website_id=website_id, title=title, body=body, price=price)
 
 
-def page_content_update_form(language_id: int = Form(...), title: str = Form(...), body: str = Form(...)):
-    return PageContentUpdate(language_id=language_id, title=title, body=body)
+def page_content_update_form(language_id: int = Form(...), title: str = Form(...), body: str = Form(...), price: Optional[float] = Form(None)):
+    return PageContentUpdate(language_id=language_id, title=title, body=body, price=price)
 
 @router.post("/", response_model=PageContentCreate)
 async def create_page_content(page: PageContentCreate = Depends(page_content_form), cover_image: UploadFile = File(None), db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -25,8 +29,6 @@ async def create_page_content(page: PageContentCreate = Depends(page_content_for
 
     if current_user.is_superuser is False:
         page.website_id = current_user.websites[0].id
-    else:
-        page.website_id = page.website_id
 
     created_page = await crud_page_content.create(db, obj_in=page)
     return created_page
@@ -51,29 +53,43 @@ async def read_page_content(content_id: int, db: AsyncSession = Depends(get_db),
         cover_image= page_content.cover_image
     )
 
-@router.get("/", response_model=List[PageContentMultiple])
+@router.get("/", response_model=PaginatedPageContentResponse)
 async def read_page_contents(query: PageContentQueryParams = Depends(), db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
-    res = []
+    response = []
 
     if query.website_id or query.page_id:
         if current_user.is_superuser is False: 
-           res = await crud_page_content.get_multiple_contents(db, page_id=query.page_id, website_id=current_user.websites[0].id,  language_code=query.language_code)
+           response = await crud_page_content.get_multi(db, skip=query.skip, limit=query.limit, load_relations=[PageContent.page, PageContent.website, PageContent.language],  
+           filters={"website_id": current_user.websites[0].id, "page_id": query.page_id, "language_id": query.language_id})
         else:
-           res = await crud_page_content.get_multiple_contents(db, page_id=query.page_id, website_id=query.website_id,  language_code=query.language_code)
+           response = await crud_page_content.get_multi(db, skip=query.skip, limit=query.limit, load_relations=[PageContent.page, PageContent.website, PageContent.language],  
+           filters={"page_id": query.page_id, "language_id": query.language_id, "website_id": query.website_id})
 
     else:
-        pages = await crud_page_content.get_multi(db, skip=query.skip, limit=query.limit, load_relations=[PageContent.page, PageContent.website, PageContent.language], filters={"website_id": current_user.websites[0].id})
-        res = [ {
-            "id": page.id,
-            "title": page.title,
-            "body": page.body,
-            "cover_image": page.cover_image,
-            "page": page.page.name,
-            "website": page.website.name,
-            "language_code": page.language.code,
-        } for page in pages]
+        response = await crud_page_content.get_multi(db, skip=query.skip, limit=query.limit, 
+        load_relations=[PageContent.page, PageContent.website, PageContent.language],
+        filters={"website_id": current_user.websites[0].id})
     
-    return res
+    res = [ {
+        "id": page.id,
+        "title": page.title,
+        "body": page.body,
+        "cover_image": page.cover_image,
+        "page": page.page.name,
+        "website": page.website.name,
+        "language_code": page.language.code,
+    } for page in response]
+    
+    total_stmt = select(func.count()).select_from(PageContent)
+    total_result = await db.execute(total_stmt)
+    total = total_result.scalar_one()
+
+    return PaginatedPageContentResponse(
+        items=res,
+        total=total,
+        limit=query.limit,
+        skip=query.skip
+    )
 
 @router.put("/{content_id}/", response_model=PageContentRead)
 async def update_page_content(content_id: int, page: PageContentUpdate = Depends(page_content_update_form), cover_image: UploadFile = File(None), db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):

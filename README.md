@@ -22,7 +22,5 @@ To autogenerate migrations based on your models, you should run:
 `alembic upgrade head` # To apply the new migration
 
 
--- kullanıcı yetkileri site bazlı olmalı. Super admin tüm siteleri yönetebilir.
--- content modeline price field eklenmesi gerekli.
 -- birden fazla görsel yüklenebilecek resim dosyası olabilir.
 -- randevu sistemi entegrasyonu gerekli.

@@ -46,6 +46,7 @@ class PageContentCreate(BaseModel):
     language_id: int
     title: str
     body: str
+    price: Optional[float] = None
     cover_image: Optional[str] = None
 
 
@@ -55,6 +56,7 @@ class PageContentUpdate(BaseModel):
     language_id: int
     title: str
     body: str
+    price: Optional[float] = None
     cover_image: Optional[str]
 
 class PageContentRead(BaseModel):
@@ -64,6 +66,7 @@ class PageContentRead(BaseModel):
     language_code: str
     title: str
     body: str
+    price: Optional[float] = None
     cover_image: Optional[str]
 
     class Config:
@@ -76,10 +79,17 @@ class PageContentMultiple(BaseModel):
     language_code: str
     title: str
     body: str
+    price:  Optional[float] = None
     cover_image: Optional[str]
 
     class Config:
         from_attributes = True
+
+class PaginatedPageContentResponse(BaseModel):
+    items: List[PageContentMultiple]
+    total: int  # total number of items in DB
+    limit: int
+    skip: int
 
 PageCreate.model_rebuild()
 PageRead.model_rebuild()

@@ -6,7 +6,7 @@ class PageContentQueryParams(BaseModel):
     limit: int = 100
     website_id: Optional[int] = None
     page_id: Optional[int] = None
-    language_code: Optional[str] = None
+    language_id: Optional[int] = None
 
 
 class LanguageQueryParams(BaseModel):

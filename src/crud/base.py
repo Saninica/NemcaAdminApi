@@ -119,6 +119,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         **kwargs,
     ) -> ModelType:
         async def create_operation(db: AsyncSession):
+            print()
             obj_in_data = obj_in.model_dump(exclude_unset=True) if obj_in else kwargs
             db_obj = self.model(**obj_in_data)
             db.add(db_obj)

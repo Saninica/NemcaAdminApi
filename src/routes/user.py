@@ -1,6 +1,6 @@
 from src.models.user import User
 from src.schemas.auth import Token
-from src.schemas.user import UserCreate, UserRead
+from src.schemas.user import UserCreate, UserRead, UserRegister
 from src.crud import user as crud_user
 from src.auth.jwt import create_access_token
 from src.dependencies import get_db, get_current_user
@@ -22,13 +22,13 @@ from src.crud.user import crud_user
 
 router = APIRouter()
 
-@router.post("/register/", response_model=UserRead)
+@router.post("/register/", response_model=UserRegister)
 async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
-    db_user = await crud_user.get(db, filters={"username": user.username})
+    db_user = await crud_user.get(db, filters={"username": user.username}, load_relations=[User.websites])
     if db_user:
         raise HTTPException(status_code=400, detail="Kullanıcı adı zaten kullanılıyor.")
 
-    db_user = await crud_user.get(db, filters={"email": user.email})
+    db_user = await crud_user.get(db, filters={"email": user.email}, load_relations=[User.websites])
     if db_user:
         raise HTTPException(status_code=400, detail="Email zaten kullanılıyor.")
     
