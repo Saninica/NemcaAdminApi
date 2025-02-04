@@ -43,8 +43,8 @@ def get_models_metadata(models: List[Type[Base]]) -> Dict[str, Dict[str, FieldMe
             try: del fields["created_at"]
             except: pass
 
-            #try: del fields["website_id"]
-            #except: pass
+            try: del fields["user_id"]
+            except: pass
 
             metadata[model_name] = fields
         except Exception as e:

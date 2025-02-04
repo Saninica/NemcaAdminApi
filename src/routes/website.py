@@ -30,14 +30,14 @@ async def create_website(name: str, domain_url: str, favicon_image: UploadFile =
 @router.get("/{website_id}", response_model=WebsiteRead)
 async def read_website(website_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.is_superuser is False:
-        return await crud_website.get(db, id=website_id, filters={"website_id": current_user.websites[0].id})
+        return await crud_website.get(db, id=website_id, filters={"id": current_user.websites[0].id})
     return await crud_website.get(db, id=website_id)
 
 
 @router.put("/{website_id}/", response_model=WebsiteBase)
 async def update_website(website_id: int, name: str, domain_url: str, favicon_image: UploadFile = File(None), db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.is_superuser is False:
-        db_web = await crud_website.get(db, id=website_id, filters={"website_id": current_user.websites[0].id})
+        db_web = await crud_website.get(db, id=website_id, filters={"id": current_user.websites[0].id})
     else:
         db_web = await crud_website.get(db, id=website_id)
 
@@ -57,7 +57,7 @@ async def update_website(website_id: int, name: str, domain_url: str, favicon_im
 @router.delete("/{website_id}/", response_model=WebsiteBase)
 async def delete_website(website_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.is_superuser is False:
-        db_web = await crud_website.get(db, id=website_id, filters={"website_id": current_user.websites[0].id})
+        db_web = await crud_website.get(db, id=website_id, filters={"id": current_user.websites[0].id})
     else:
         db_web = await crud_website.get(db, id=website_id)
 

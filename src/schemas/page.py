@@ -63,7 +63,7 @@ class PageContentRead(BaseModel):
     id: int
     page_id: int
     website_id: int
-    language_code: str
+    language_id: int
     title: str
     body: str
     price: Optional[float] = None

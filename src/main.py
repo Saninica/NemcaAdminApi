@@ -14,7 +14,7 @@ media_url = f"/media"
 app.mount(media_url, StaticFiles(directory=media_dir), name="media")
 
 
-#app.root_path = settings.ROOT_PATH
+app.root_path = settings.ROOT_PATH
 app.include_router(prefix="/api", router=api_router)
 app.add_middleware(
     CORSMiddleware,

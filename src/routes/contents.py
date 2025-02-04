@@ -37,9 +37,9 @@ async def create_page_content(page: PageContentCreate = Depends(page_content_for
 @router.get("/{content_id}/", response_model=PageContentRead)
 async def read_page_content(content_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.is_superuser is False:
-        page_content = await crud_page_content.get(db, id=content_id,  load_relations=[PageContent.page, PageContent.website] , filters={"website_id": current_user.websites[0].id})
+        page_content = await crud_page_content.get(db, id=content_id,  load_relations=[PageContent.page, PageContent.website, PageContent.language] , filters={"website_id": current_user.websites[0].id})
     else:
-        page_content = await crud_page_content.get(db, id=content_id,  load_relations=[PageContent.page, PageContent.website])
+        page_content = await crud_page_content.get(db, id=content_id,  load_relations=[PageContent.page, PageContent.website, PageContent.language])
     
     if not page_content:
         raise HTTPException(status_code=404, detail="Page not found")
@@ -47,7 +47,7 @@ async def read_page_content(content_id: int, db: AsyncSession = Depends(get_db),
         id=page_content.id,
         page_id=page_content.page.id,  
         website_id=page_content.website.id,  
-        language_code=page_content.language_code,
+        language_id=page_content.language.id,
         title=page_content.title,
         body=page_content.body,
         cover_image= page_content.cover_image
