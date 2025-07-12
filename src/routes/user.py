@@ -1,23 +1,16 @@
 from src.models.user import User
 from src.schemas.auth import Token
 from src.schemas.user import UserCreate, UserRead, UserRegister
-from src.crud import user as crud_user
-from src.auth.jwt import create_access_token
-from src.dependencies import get_db, get_current_user
+from src.crud.user import crud_user
+from src.auth.jwt import create_access_token, blacklist_token
+from src.dependencies import get_db, get_current_user, get_current_user_with_token
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import APIRouter, Depends, HTTPException, status
-from src.models.user import User
-from src.schemas.auth import Token
-from src.schemas.user import UserCreate, UserRead
-from src.auth.jwt import create_access_token
-from src.dependencies import get_db, get_current_user
+from fastapi import APIRouter
 from passlib.context import CryptContext
-from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.crud.user import crud_user
 
 
 router = APIRouter()
@@ -33,9 +26,15 @@ async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email zaten kullanılıyor.")
     
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")      
-    user.hashed_password = pwd_context.hash(user.hashed_password)
+    # Hash the plaintext password received from client
+    hashed_password = pwd_context.hash(user.password)
+    
+    # Create a new user dict with the hashed password
+    user_data = user.dict()
+    user_data["hashed_password"] = hashed_password
+    del user_data["password"]  # Remove plaintext password
 
-    created_user = await crud_user.create(db=db, obj_in=user)
+    created_user = await crud_user.create(db=db, obj_in=user_data)
 
     return created_user
 
@@ -69,6 +68,18 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     )
 
     return {"access_token": access_token, "token_type": "bearer", "user": user_data}
+
+@router.post("/logout/")
+async def logout(user_data: tuple = Depends(get_current_user_with_token)):
+    """
+    Logout endpoint that invalidates the current user's token
+    """
+    current_user, token_jti = user_data
+    
+    # Blacklist the token to prevent further use
+    blacklist_token(token_jti)
+    
+    return {"message": "Successfully logged out"}
 
 @router.get("/", response_model=UserRead)
 async def read_users_me(current_user: User = Depends(get_current_user)):

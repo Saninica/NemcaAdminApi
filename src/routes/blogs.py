@@ -35,7 +35,7 @@ async def read_blog(blog_id: int, db: AsyncSession = Depends(get_db), current_us
 
 
 @router.put("/{blog_id}", response_model=BlogBase)
-async def update_blog(blog_id: int, title: str, content: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def update_blog(blog_id: int, blog: BlogUpdate, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.is_superuser is False:
         db_blog =  await crud_blog.get(db, id=blog_id, filters={"website_id": current_user.websites[0].id})
     else:
@@ -43,8 +43,6 @@ async def update_blog(blog_id: int, title: str, content: str, db: AsyncSession =
         
     if not db_blog:
         raise HTTPException(status_code=404, detail="Blog not found")
-
-    blog = BlogUpdate(title=title, content=content)
 
     return await crud_blog.update(db, db_obj=db_blog, obj_in=blog)
 

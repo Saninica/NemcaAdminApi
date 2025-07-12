@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "nemca-admin-api-collection",
 		"name": "Nemca Admin API",
-		"description": "Complete API collection for Nemca Admin CMS - A multi-tenant content management system with multi-language support.\n\n## 🚀 Getting Started\n\n1. **Set Environment Variables**: Create a new environment with the following variables:\n   - `base_url`: Your API base URL (e.g., `http://localhost:8000`)\n   - `token`: Will be auto-populated after login\n   - `website_id`: Your website ID (will be set after login)\n\n2. **Authentication Flow**:\n   - Register a new user OR\n   - Login with existing credentials\n   - Token will be automatically stored and used for subsequent requests\n\n3. **Multi-tenant Support**:\n   - Regular users can only access their own website data\n   - Superusers can access all websites\n\n## 🏗️ API Architecture\n\n- **FastAPI** with async/await patterns\n- **JWT Authentication** with 30-minute expiration\n- **PostgreSQL** database with SQLAlchemy\n- **Multi-language** content support\n- **File upload** capabilities\n- **Role-based access** control",
+		"description": "Complete API collection for Nemca Admin CMS - A multi-tenant content management system with multi-language support.\n\n## 🚀 Getting Started\n\n1. **Set Environment Variables**: Create a new environment with the following variables:\n   - `base_url`: Your API base URL (e.g., `http://localhost:8000`)\n   - `token`: Will be auto-populated after login\n   - `website_id`: Your website ID (will be set after login)\n\n2. **Authentication Flow**:\n   - Register a new user (send plaintext password - secure hashing on server)\n   - Login with existing credentials\n   - Token will be automatically stored and used for subsequent requests\n   - Use logout endpoint to invalidate tokens server-side\n\n3. **Multi-tenant Support**:\n   - Regular users can only access their own website data\n   - Superusers can access all websites\n\n## 🔒 Security Features\n\n- **Secure Password Handling**: Server-side only password hashing\n- **JWT Token Invalidation**: Server-side logout with token blacklisting\n- **Role-based Access Control**: Multi-tenant security model\n- **Enhanced Authentication**: JTI-based token tracking\n\n## 🏗️ API Architecture\n\n- **FastAPI** with async/await patterns\n- **JWT Authentication** with 30-minute expiration + server-side invalidation\n- **PostgreSQL** database with SQLAlchemy\n- **Multi-language** content support\n- **File upload** capabilities\n- **Dynamic form metadata** with enhanced validation\n- **Consistent API design** patterns\n\n## 📋 Content-Type Standards\n\n- **JSON endpoints**: `application/json` for data-only operations\n- **File upload endpoints**: `multipart/form-data` for operations with files\n- **Consistent patterns**: Same Content-Type for create/update per resource type",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -33,7 +33,10 @@
 					"            value: 'Bearer ' + pm.variables.get('token')",
 					"        });",
 					"    }",
-					"}"
+					"}",
+					"",
+					"// Security note: Tokens are now invalidated server-side on logout",
+					"// Make sure to use the logout endpoint to properly terminate sessions"
 				]
 			}
 		}
@@ -80,15 +83,81 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"john_doe\",\n    \"email\": \"john@example.com\",\n    \"hashed_password\": \"secretpassword123\"\n}"
+							"raw": "{\n    \"username\": \"john_doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"secretpassword123\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/user/register/",
 							"host": ["{{base_url}}"],
 							"path": ["api", "user", "register", ""]
 						},
-						"description": "Register a new user account. Password will be automatically hashed."
-					}
+						"description": "Register a new user account. Send plaintext password - secure hashing performed server-side only for maximum security."
+					},
+					"response": [
+						{
+							"name": "Successful Registration",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"john_doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"secretpassword123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/register/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "register", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"username\": \"john_doe\",\n    \"email\": \"john@example.com\"\n}"
+						},
+						{
+							"name": "Username Already Exists",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"existing_user\",\n    \"email\": \"new@example.com\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/register/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "register", ""]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": \"Kullanıcı adı zaten kullanılıyor.\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Login User",
@@ -152,7 +221,95 @@
 							"path": ["api", "user", "login", ""]
 						},
 						"description": "Login with username and password. Returns JWT token and user information."
-					}
+					},
+					"response": [
+						{
+							"name": "Successful Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "username",
+											"value": "john_doe",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "secretpassword123",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/login/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "login", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqb2huX2RvZSIsImV4cCI6MTcwMzE3MjAwMCwianRpIjoiMTIzNDU2Nzg5MCJ9.example-signature\",\n    \"token_type\": \"bearer\",\n    \"user\": {\n        \"id\": 1,\n        \"username\": \"john_doe\",\n        \"email\": \"john@example.com\",\n        \"is_active\": true,\n        \"is_superuser\": false,\n        \"websites\": [\n            {\n                \"id\": 1,\n                \"name\": \"My Website\"\n            }\n        ]\n    }\n}"
+						},
+						{
+							"name": "Invalid Credentials",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "username",
+											"value": "john_doe",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "wrongpassword",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/login/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "login", ""]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": \"Kullanıcı adı veya şifre yanlış.\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Get Current User",
@@ -185,7 +342,156 @@
 							"path": ["api", "user", ""]
 						},
 						"description": "Get current authenticated user information and associated websites."
-					}
+					},
+					"response": [
+						{
+							"name": "Current User Info",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/user/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 1,\n    \"username\": \"john_doe\",\n    \"email\": \"john@example.com\",\n    \"is_active\": true,\n    \"is_superuser\": false,\n    \"websites\": [\n        {\n            \"id\": 1,\n            \"name\": \"My Website\"\n        }\n    ]\n}"
+						},
+						{
+							"name": "Unauthorized",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/user/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", ""]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": \"Not authenticated\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Logout User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Logout successful', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.include('logged out');",
+									"    ",
+									"    // Clear stored authentication data",
+									"    pm.environment.unset('token');",
+									"    pm.environment.unset('user_id');",
+									"    pm.environment.unset('website_id');",
+									"    pm.environment.unset('is_superuser');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/logout/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "user", "logout", ""]
+						},
+						"description": "Logout the current user and invalidate their JWT token on the server side."
+					},
+					"response": [
+						{
+							"name": "Successful Logout",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/user/logout/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "logout", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Successfully logged out\"\n}"
+						},
+						{
+							"name": "Unauthorized - Invalid Token",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer invalid_token"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/user/logout/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "logout", ""]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": \"Geçersiz kimlik dogrulama bilgileri.\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Assign Website to User",
@@ -737,7 +1043,37 @@
 							"path": ["api", "blog", ""]
 						},
 						"description": "Get all blog posts for the current user's website."
-					}
+					},
+					"response": [
+						{
+							"name": "Success - Blog List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/blog/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "blog", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 1,\n        \"body\": \"This is my first blog post content. It contains useful information about our services and company updates.\",\n        \"website_id\": 1,\n        \"page_id\": 1,\n        \"language_code\": \"en\"\n    },\n    {\n        \"id\": 2,\n        \"body\": \"Another blog post with more interesting content about our latest features and improvements.\",\n        \"website_id\": 1,\n        \"page_id\": 2,\n        \"language_code\": \"en\"\n    }\n]"
+						}
+					]
 				},
 				{
 					"name": "Create Blog Post",
@@ -759,7 +1095,45 @@
 							"path": ["api", "blog", ""]
 						},
 						"description": "Create a new blog post."
-					}
+					},
+					"response": [
+						{
+							"name": "Success - Blog Created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"body\": \"This is my first blog post content. It contains useful information about our services and company updates.\",\n    \"page_id\": 1,\n    \"language_id\": 1,\n    \"website_id\": 1\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/blog/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "blog", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"body\": \"This is my first blog post content. It contains useful information about our services and company updates.\",\n    \"website_id\": 1,\n    \"page_id\": 1,\n    \"language_code\": \"en\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Get Blog by ID",
@@ -772,35 +1146,125 @@
 							"path": ["api", "blog", "1"]
 						},
 						"description": "Get specific blog post by ID."
-					}
+					},
+					"response": [
+						{
+							"name": "Success - Blog Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/blog/1",
+									"host": ["{{base_url}}"],
+									"path": ["api", "blog", "1"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 1,\n    \"body\": \"This is my first blog post content. It contains useful information about our services and company updates.\",\n    \"website_id\": 1,\n    \"page_id\": 1,\n    \"language_code\": \"en\"\n}"
+						},
+						{
+							"name": "Blog Not Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/blog/999",
+									"host": ["{{base_url}}"],
+									"path": ["api", "blog", "999"]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": \"Blog not found\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Update Blog Post",
 					"request": {
 						"method": "PUT",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "title",
-									"value": "Updated Blog Title",
-									"type": "text"
-								},
-								{
-									"key": "content",
-									"value": "Updated blog content with new information and insights...",
-									"type": "text"
-								}
-							]
+							"mode": "raw",
+							"raw": "{\n    \"body\": \"Updated blog content with new information and insights...\",\n    \"page_id\": 1,\n    \"language_id\": 1,\n    \"website_id\": {{website_id}}\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/blog/1",
 							"host": ["{{base_url}}"],
 							"path": ["api", "blog", "1"]
 						},
-						"description": "Update existing blog post."
-					}
+						"description": "Update existing blog post using JSON format for consistency."
+					},
+					"response": [
+						{
+							"name": "Success - Blog Updated",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"body\": \"Updated blog content with new information and insights...\",\n    \"page_id\": 1,\n    \"language_id\": 1,\n    \"website_id\": 1\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/blog/1",
+									"host": ["{{base_url}}"],
+									"path": ["api", "blog", "1"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"body\": \"Updated blog content with new information and insights...\",\n    \"website_id\": 1,\n    \"page_id\": 1,\n    \"language_code\": \"en\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Delete Blog Post",
@@ -813,7 +1277,37 @@
 							"path": ["api", "blog", "1", ""]
 						},
 						"description": "Delete a blog post."
-					}
+					},
+					"response": [
+						{
+							"name": "Success - Blog Deleted",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/blog/1/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "blog", "1", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Blog post deleted successfully\"\n}"
+						}
+					]
 				}
 			],
 			"description": "Blog management endpoints for creating and managing blog content."
@@ -832,7 +1326,37 @@
 							"path": ["api", "announcement", ""]
 						},
 						"description": "Get all announcements for the current user's website."
-					}
+					},
+					"response": [
+						{
+							"name": "Success - Announcements List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/announcement/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "announcement", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 1,\n        \"title\": \"Important Announcement\",\n        \"body\": \"We are pleased to announce our new service offerings...\",\n        \"cover_image\": \"https://example.com/media/announcement-cover.jpg\",\n        \"start_date\": \"2024-01-01T00:00:00\",\n        \"end_date\": \"2024-12-31T23:59:59\",\n        \"created_at\": \"2024-01-01T10:00:00\",\n        \"page_id\": 1,\n        \"website_id\": 1,\n        \"language_id\": 1\n    }\n]"
+						}
+					]
 				},
 				{
 					"name": "Create Announcement",
@@ -886,7 +1410,72 @@
 							"path": ["api", "announcement", ""]
 						},
 						"description": "Create a new announcement with optional cover image."
-					}
+					},
+					"response": [
+						{
+							"name": "Success - Announcement Created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "page_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "language_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "title",
+											"value": "Important Announcement",
+											"type": "text"
+										},
+										{
+											"key": "body",
+											"value": "We are pleased to announce our new service offerings...",
+											"type": "text"
+										},
+										{
+											"key": "start_date",
+											"value": "2024-01-01T00:00:00",
+											"type": "text"
+										},
+										{
+											"key": "end_date",
+											"value": "2024-12-31T23:59:59",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/announcement/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "announcement", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 1,\n    \"title\": \"Important Announcement\",\n    \"body\": \"We are pleased to announce our new service offerings...\",\n    \"cover_image\": \"\",\n    \"start_date\": \"2024-01-01T00:00:00\",\n    \"end_date\": \"2024-12-31T23:59:59\",\n    \"created_at\": \"2024-01-01T10:00:00\",\n    \"page_id\": 1,\n    \"website_id\": 1,\n    \"language_id\": 1\n}"
+						}
+					]
 				},
 				{
 					"name": "Get Announcement by ID",
@@ -899,29 +1488,184 @@
 							"path": ["api", "announcement", "1", ""]
 						},
 						"description": "Get specific announcement by ID."
-					}
+					},
+					"response": [
+						{
+							"name": "Success - Announcement Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/announcement/1/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "announcement", "1", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 1,\n    \"title\": \"Important Announcement\",\n    \"body\": \"We are pleased to announce our new service offerings...\",\n    \"cover_image\": \"https://example.com/media/announcement-cover.jpg\",\n    \"start_date\": \"2024-01-01T00:00:00\",\n    \"end_date\": \"2024-12-31T23:59:59\",\n    \"created_at\": \"2024-01-01T10:00:00\",\n    \"page_id\": 1,\n    \"website_id\": 1,\n    \"language_id\": 1\n}"
+						},
+						{
+							"name": "Announcement Not Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/announcement/999/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "announcement", "999", ""]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": \"Announcement not found\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Update Announcement",
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"title\": \"Updated Announcement Title\",\n    \"body\": \"Updated announcement content...\",\n    \"start_date\": \"2024-01-01T00:00:00\",\n    \"end_date\": \"2024-12-31T23:59:59\"\n}"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "page_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "language_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Updated Announcement Title",
+									"type": "text"
+								},
+								{
+									"key": "body",
+									"value": "Updated announcement content...",
+									"type": "text"
+								},
+								{
+									"key": "start_date",
+									"value": "2024-01-01T00:00:00",
+									"type": "text"
+								},
+								{
+									"key": "end_date",
+									"value": "2024-12-31T23:59:59",
+									"type": "text"
+								},
+								{
+									"key": "cover_image",
+									"type": "file",
+									"src": "",
+									"disabled": true
+								}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/announcement/1/",
 							"host": ["{{base_url}}"],
 							"path": ["api", "announcement", "1", ""]
 						},
-						"description": "Update existing announcement."
-					}
+						"description": "Update existing announcement using form data for consistency with file uploads."
+					},
+					"response": [
+						{
+							"name": "Success - Announcement Updated",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "page_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "language_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "title",
+											"value": "Updated Announcement Title",
+											"type": "text"
+										},
+										{
+											"key": "body",
+											"value": "Updated announcement content...",
+											"type": "text"
+										},
+										{
+											"key": "start_date",
+											"value": "2024-01-01T00:00:00",
+											"type": "text"
+										},
+										{
+											"key": "end_date",
+											"value": "2024-12-31T23:59:59",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/announcement/1/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "announcement", "1", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 1,\n    \"title\": \"Updated Announcement Title\",\n    \"body\": \"Updated announcement content...\",\n    \"cover_image\": \"https://example.com/media/announcement-cover.jpg\",\n    \"start_date\": \"2024-01-01T00:00:00\",\n    \"end_date\": \"2024-12-31T23:59:59\",\n    \"created_at\": \"2024-01-01T10:00:00\",\n    \"page_id\": 1,\n    \"website_id\": 1,\n    \"language_id\": 1\n}"
+						}
+					]
 				},
 				{
 					"name": "Delete Announcement",
@@ -934,7 +1678,37 @@
 							"path": ["api", "announcement", "1", ""]
 						},
 						"description": "Delete an announcement."
-					}
+					},
+					"response": [
+						{
+							"name": "Success - Announcement Deleted",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/announcement/1/",
+									"host": ["{{base_url}}"],
+									"path": ["api", "announcement", "1", ""]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 1,\n    \"title\": \"Important Announcement\",\n    \"body\": \"We are pleased to announce our new service offerings...\",\n    \"cover_image\": \"https://example.com/media/announcement-cover.jpg\",\n    \"start_date\": \"2024-01-01T00:00:00\",\n    \"end_date\": \"2024-12-31T23:59:59\",\n    \"created_at\": \"2024-01-01T10:00:00\",\n    \"page_id\": 1,\n    \"website_id\": 1,\n    \"language_id\": 1\n}"
+						}
+					]
 				}
 			],
 			"description": "Announcement management endpoints for time-bound announcements."
@@ -1027,6 +1801,86 @@
 				}
 			],
 			"description": "Meta tags management for SEO optimization of pages."
+		},
+		{
+			"name": "🔧 Metadata & Dynamic Forms",
+			"item": [
+				{
+					"name": "Get Models Metadata",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has models metadata', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('models');",
+									"    pm.expect(jsonData.models).to.be.an('object');",
+									"    ",
+									"    // Check if metadata has enhanced structure",
+									"    const modelNames = Object.keys(jsonData.models);",
+									"    if (modelNames.length > 0) {",
+									"        const firstModel = jsonData.models[modelNames[0]];",
+									"        const fieldNames = Object.keys(firstModel);",
+									"        if (fieldNames.length > 0) {",
+									"            const firstField = firstModel[fieldNames[0]];",
+									"            pm.expect(firstField).to.have.property('input_type');",
+									"            pm.expect(firstField).to.have.property('constraints');",
+									"        }",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/metadata/models",
+							"host": ["{{base_url}}"],
+							"path": ["api", "metadata", "models"]
+						},
+						"description": "Get enhanced metadata for all database models to enable dynamic form generation. Returns input types, validation constraints, and field information for frontend form builders."
+					},
+					"response": [
+						{
+							"name": "Success - Enhanced Metadata",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/metadata/models",
+									"host": ["{{base_url}}"],
+									"path": ["api", "metadata", "models"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"models\": {\n        \"User\": {\n            \"username\": {\n                \"input_type\": \"text\",\n                \"nullable\": false,\n                \"primary_key\": false,\n                \"constraints\": {\n                    \"maxLength\": 50,\n                    \"unique\": true\n                }\n            },\n            \"email\": {\n                \"input_type\": \"email\",\n                \"nullable\": false,\n                \"primary_key\": false,\n                \"constraints\": {\n                    \"maxLength\": 100,\n                    \"pattern\": \"^[^\\\\s@]+@[^\\\\s@]+\\\\.[^\\\\s@]+$\"\n                }\n            },\n            \"is_active\": {\n                \"input_type\": \"checkbox\",\n                \"nullable\": false,\n                \"primary_key\": false,\n                \"constraints\": {\n                    \"default\": \"True\"\n                }\n            },\n            \"is_superuser\": {\n                \"input_type\": \"checkbox\",\n                \"nullable\": false,\n                \"primary_key\": false,\n                \"constraints\": {\n                    \"default\": \"False\"\n                }\n            }\n        },\n        \"Blog\": {\n            \"body\": {\n                \"input_type\": \"textarea\",\n                \"nullable\": false,\n                \"primary_key\": false,\n                \"constraints\": {}\n            },\n            \"website_id\": {\n                \"input_type\": \"select\",\n                \"nullable\": true,\n                \"primary_key\": false,\n                \"constraints\": {},\n                \"foreign_key\": {\n                    \"target_table\": \"websites\",\n                    \"target_model\": \"Website\",\n                    \"target_field\": \"id\"\n                }\n            },\n            \"page_id\": {\n                \"input_type\": \"select\",\n                \"nullable\": true,\n                \"primary_key\": false,\n                \"constraints\": {},\n                \"foreign_key\": {\n                    \"target_table\": \"pages\",\n                    \"target_model\": \"Page\",\n                    \"target_field\": \"id\"\n                }\n            },\n            \"language_code\": {\n                \"input_type\": \"text\",\n                \"nullable\": true,\n                \"primary_key\": false,\n                \"constraints\": {}\n            }\n        },\n        \"Announcement\": {\n            \"title\": {\n                \"input_type\": \"text\",\n                \"nullable\": false,\n                \"primary_key\": false,\n                \"constraints\": {}\n            },\n            \"body\": {\n                \"input_type\": \"textarea\",\n                \"nullable\": false,\n                \"primary_key\": false,\n                \"constraints\": {}\n            },\n            \"cover_image\": {\n                \"input_type\": \"text\",\n                \"nullable\": false,\n                \"primary_key\": false,\n                \"constraints\": {}\n            },\n            \"start_date\": {\n                \"input_type\": \"datetime-local\",\n                \"nullable\": false,\n                \"primary_key\": false,\n                \"constraints\": {}\n            },\n            \"end_date\": {\n                \"input_type\": \"datetime-local\",\n                \"nullable\": false,\n                \"primary_key\": false,\n                \"constraints\": {}\n            }\n        }\n    }\n}"
+						}
+					]
+				}
+			],
+			"description": "Enhanced metadata endpoints for dynamic form generation with smart input types and validation rules."
 		},
 		{
 			"name": "📁 File Management",

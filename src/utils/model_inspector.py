@@ -15,11 +15,25 @@ def get_models_metadata(models: List[Type[Base]]) -> Dict[str, Dict[str, FieldMe
             mapper = inspect(model)
             fields = {}
             for column in mapper.columns:
+                # Get enhanced type mapping with constraints
+                type_info = map_type(column.type)
+                
                 field_info = {
-                    "type": map_type(column.type),
+                    "input_type": type_info["input_type"],
                     "nullable": column.nullable,
                     "primary_key": column.primary_key,
+                    "constraints": type_info["constraints"],
                 }
+                
+                # Add additional constraints from column attributes
+                if hasattr(column, 'default') and column.default is not None:
+                    field_info["constraints"]["default"] = str(column.default.arg) if hasattr(column.default, 'arg') else str(column.default)
+                
+                if hasattr(column, 'unique') and column.unique:
+                    field_info["constraints"]["unique"] = True
+                
+                if hasattr(column, 'index') and column.index:
+                    field_info["constraints"]["indexed"] = True
                 
                 # Check for ForeignKey
                 foreign_keys = list(column.foreign_keys)
@@ -33,7 +47,8 @@ def get_models_metadata(models: List[Type[Base]]) -> Dict[str, Dict[str, FieldMe
                         "target_model": target_model,
                         "target_field": target_field,
                     }
-                
+                    # Override input type for foreign keys
+                    field_info["input_type"] = "select"
                 
                 fields[column.key] = FieldMetadata(**field_info)
 

@@ -7,7 +7,7 @@ class UserBase(BaseModel):
     email: EmailStr
 
 class UserCreate(UserBase):
-    hashed_password: str
+    password: str
 
 class UserRead(UserBase):
     id: int

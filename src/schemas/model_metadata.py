@@ -8,9 +8,10 @@ class ForeignKeyInfo(BaseModel):
     target_field: str
 
 class FieldMetadata(BaseModel):
-    type: str
+    input_type: str
     nullable: bool
     primary_key: bool
+    constraints: Dict = {}
     foreign_key: Optional[ForeignKeyInfo] = None
 
 class ModelMetadata(BaseModel):
