@@ -19,8 +19,8 @@ def page_content_form(page_id: int = Form(...), language_id: int = Form(...), ti
     return PageContentCreate(page_id=page_id, language_id=language_id, website_id=website_id, title=title, body=body, price=price)
 
 
-def page_content_update_form(language_id: int = Form(...), title: str = Form(...), body: str = Form(...), price: Optional[float] = Form(None)):
-    return PageContentUpdate(language_id=language_id, title=title, body=body, price=price)
+def page_content_update_form(page_id: int = Form(...), website_id: int = Form(...), language_id: int = Form(...), title: str = Form(...), body: str = Form(...), price: Optional[float] = Form(None)):
+    return PageContentUpdate(page_id=page_id, website_id=website_id, language_id=language_id, title=title, body=body, price=price)
 
 @router.post("/", response_model=PageContentCreate)
 async def create_page_content(page: PageContentCreate = Depends(page_content_form), cover_images: List[UploadFile] = File(None), db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
