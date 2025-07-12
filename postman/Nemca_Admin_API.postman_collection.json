@@ -1,0 +1,1074 @@
+{
+	"info": {
+		"_postman_id": "nemca-admin-api-collection",
+		"name": "Nemca Admin API",
+		"description": "Complete API collection for Nemca Admin CMS - A multi-tenant content management system with multi-language support.\n\n## 🚀 Getting Started\n\n1. **Set Environment Variables**: Create a new environment with the following variables:\n   - `base_url`: Your API base URL (e.g., `http://localhost:8000`)\n   - `token`: Will be auto-populated after login\n   - `website_id`: Your website ID (will be set after login)\n\n2. **Authentication Flow**:\n   - Register a new user OR\n   - Login with existing credentials\n   - Token will be automatically stored and used for subsequent requests\n\n3. **Multi-tenant Support**:\n   - Regular users can only access their own website data\n   - Superusers can access all websites\n\n## 🏗️ API Architecture\n\n- **FastAPI** with async/await patterns\n- **JWT Authentication** with 30-minute expiration\n- **PostgreSQL** database with SQLAlchemy\n- **Multi-language** content support\n- **File upload** capabilities\n- **Role-based access** control",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-add Authorization header for protected endpoints",
+					"if (pm.variables.get('token') && pm.request.url.path.includes('/api/')) {",
+					"    const excludedPaths = ['/api/user/register', '/api/user/login'];",
+					"    const currentPath = pm.request.url.getPath();",
+					"    const isExcluded = excludedPaths.some(path => currentPath.includes(path));",
+					"    ",
+					"    if (!isExcluded) {",
+					"        pm.request.headers.add({",
+					"            key: 'Authorization',",
+					"            value: 'Bearer ' + pm.variables.get('token')",
+					"        });",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has user data', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('username');",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"john_doe\",\n    \"email\": \"john@example.com\",\n    \"hashed_password\": \"secretpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/register/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "user", "register", ""]
+						},
+						"description": "Register a new user account. Password will be automatically hashed."
+					}
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has access token', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('access_token');",
+									"    pm.expect(jsonData).to.have.property('token_type');",
+									"    pm.expect(jsonData).to.have.property('user');",
+									"    ",
+									"    // Store token for subsequent requests",
+									"    pm.environment.set('token', jsonData.access_token);",
+									"    ",
+									"    // Store user data",
+									"    if (jsonData.user && jsonData.user.websites && jsonData.user.websites.length > 0) {",
+									"        pm.environment.set('website_id', jsonData.user.websites[0].id);",
+									"    }",
+									"    ",
+									"    pm.environment.set('user_id', jsonData.user.id);",
+									"    pm.environment.set('is_superuser', jsonData.user.is_superuser);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "john_doe",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "secretpassword123",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/login/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "user", "login", ""]
+						},
+						"description": "Login with username and password. Returns JWT token and user information."
+					}
+				},
+				{
+					"name": "Get Current User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has user data', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('username');",
+									"    pm.expect(jsonData).to.have.property('websites');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "user", ""]
+						},
+						"description": "Get current authenticated user information and associated websites."
+					}
+				},
+				{
+					"name": "Assign Website to User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/user/website/?website_id=1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "user", "website", ""],
+							"query": [
+								{
+									"key": "website_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Assign a website to the current user."
+					}
+				}
+			],
+			"description": "Authentication endpoints for user registration, login, and profile management."
+		},
+		{
+			"name": "🌐 Website Management",
+			"item": [
+				{
+					"name": "Get All Websites",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/website/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "website", ""]
+						},
+						"description": "Get all websites. Regular users see only their websites, superusers see all."
+					}
+				},
+				{
+					"name": "Create Website",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "My Awesome Website",
+									"type": "text"
+								},
+								{
+									"key": "domain_url",
+									"value": "https://myawesomewebsite.com",
+									"type": "text"
+								},
+								{
+									"key": "favicon_image",
+									"type": "file",
+									"src": "",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/website/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "website", ""]
+						},
+						"description": "Create a new website with optional favicon upload."
+					}
+				},
+				{
+					"name": "Get Website by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/website/{{website_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "website", "{{website_id}}"]
+						},
+						"description": "Get specific website by ID."
+					}
+				},
+				{
+					"name": "Update Website",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Updated Website Name",
+									"type": "text"
+								},
+								{
+									"key": "domain_url",
+									"value": "https://updated-domain.com",
+									"type": "text"
+								},
+								{
+									"key": "favicon_image",
+									"type": "file",
+									"src": "",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/website/{{website_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "website", "{{website_id}}", ""]
+						},
+						"description": "Update website information and favicon."
+					}
+				},
+				{
+					"name": "Delete Website",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/website/{{website_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "website", "{{website_id}}", ""]
+						},
+						"description": "Delete a website."
+					}
+				},
+				{
+					"name": "Get Website Complete Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/website/all-info/{{website_id}}/en/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "website", "all-info", "{{website_id}}", "en", ""]
+						},
+						"description": "Get complete website information for a specific language."
+					}
+				}
+			],
+			"description": "Website management endpoints for creating and managing multiple websites."
+		},
+		{
+			"name": "📄 Page Management",
+			"item": [
+				{
+					"name": "Get All Pages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/page/?skip=0&limit=100",
+							"host": ["{{base_url}}"],
+							"path": ["api", "page", ""],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						},
+						"description": "Get all pages with pagination support."
+					}
+				},
+				{
+					"name": "Create Page",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"about_us\",\n    \"website_id\": {{website_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/page/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "page", ""]
+						},
+						"description": "Create a new page. Website ID is auto-assigned for regular users."
+					}
+				},
+				{
+					"name": "Get Page by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/page/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "page", "1", ""]
+						},
+						"description": "Get specific page with its content."
+					}
+				},
+				{
+					"name": "Update Page",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"updated_page_name\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/page/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "page", "1", ""]
+						},
+						"description": "Update page information."
+					}
+				},
+				{
+					"name": "Delete Page",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/page/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "page", "1", ""]
+						},
+						"description": "Delete a page and all its content."
+					}
+				}
+			],
+			"description": "Page management endpoints for creating and organizing website pages."
+		},
+		{
+			"name": "📝 Content Management",
+			"item": [
+				{
+					"name": "Get All Page Contents",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/content/?skip=0&limit=10&page_id=1&language_id=1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "content", ""],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "page_id",
+									"value": "1",
+									"description": "Optional: Filter by page"
+								},
+								{
+									"key": "language_id",
+									"value": "1",
+									"description": "Optional: Filter by language"
+								}
+							]
+						},
+						"description": "Get paginated list of page contents with optional filters."
+					}
+				},
+				{
+					"name": "Create Page Content",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "page_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "language_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Welcome to Our Website",
+									"type": "text"
+								},
+								{
+									"key": "body",
+									"value": "This is the main content of our homepage. We provide excellent services...",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "99.99",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "cover_image",
+									"type": "file",
+									"src": "",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/content/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "content", ""]
+						},
+						"description": "Create new page content with optional cover image upload."
+					}
+				},
+				{
+					"name": "Get Content by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/content/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "content", "1", ""]
+						},
+						"description": "Get specific page content by ID."
+					}
+				},
+				{
+					"name": "Update Page Content",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "language_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Updated Page Title",
+									"type": "text"
+								},
+								{
+									"key": "body",
+									"value": "Updated content body with new information...",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "149.99",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "cover_image",
+									"type": "file",
+									"src": "",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/content/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "content", "1", ""]
+						},
+						"description": "Update existing page content."
+					}
+				},
+				{
+					"name": "Delete Page Content",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/content/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "content", "1", ""]
+						},
+						"description": "Delete page content."
+					}
+				}
+			],
+			"description": "Content management endpoints for creating and managing multilingual page content."
+		},
+		{
+			"name": "🌍 Language Management",
+			"item": [
+				{
+					"name": "Get All Languages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/language/?skip=0&limit=10&lang=en",
+							"host": ["{{base_url}}"],
+							"path": ["api", "language", ""],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "lang",
+									"value": "en",
+									"description": "Optional: Filter by language code",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get paginated list of languages with optional filtering."
+					}
+				},
+				{
+					"name": "Create Language",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"en\",\n    \"name\": \"English\",\n    \"website_id\": {{website_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/language/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "language", ""]
+						},
+						"description": "Create a new language for the website."
+					}
+				},
+				{
+					"name": "Get Language by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/language/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "language", "1"]
+						},
+						"description": "Get specific language by ID."
+					}
+				},
+				{
+					"name": "Update Language",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"American English\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/language/?lang=en",
+							"host": ["{{base_url}}"],
+							"path": ["api", "language", ""],
+							"query": [
+								{
+									"key": "lang",
+									"value": "en"
+								}
+							]
+						},
+						"description": "Update language information by language code."
+					}
+				},
+				{
+					"name": "Delete Language",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/language/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "language", "1"]
+						},
+						"description": "Delete a language and all its associated content."
+					}
+				}
+			],
+			"description": "Language management endpoints for multilingual website support."
+		},
+		{
+			"name": "📰 Blog Management",
+			"item": [
+				{
+					"name": "Get All Blogs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/blog/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "blog", ""]
+						},
+						"description": "Get all blog posts for the current user's website."
+					}
+				},
+				{
+					"name": "Create Blog Post",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"body\": \"This is my first blog post content. It contains useful information about our services and company updates.\",\n    \"page_id\": 1,\n    \"language_id\": 1,\n    \"website_id\": {{website_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/blog/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "blog", ""]
+						},
+						"description": "Create a new blog post."
+					}
+				},
+				{
+					"name": "Get Blog by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/blog/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "blog", "1"]
+						},
+						"description": "Get specific blog post by ID."
+					}
+				},
+				{
+					"name": "Update Blog Post",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Updated Blog Title",
+									"type": "text"
+								},
+								{
+									"key": "content",
+									"value": "Updated blog content with new information and insights...",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/blog/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "blog", "1"]
+						},
+						"description": "Update existing blog post."
+					}
+				},
+				{
+					"name": "Delete Blog Post",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/blog/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "blog", "1", ""]
+						},
+						"description": "Delete a blog post."
+					}
+				}
+			],
+			"description": "Blog management endpoints for creating and managing blog content."
+		},
+		{
+			"name": "📢 Announcement Management",
+			"item": [
+				{
+					"name": "Get All Announcements",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/announcement/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "announcement", ""]
+						},
+						"description": "Get all announcements for the current user's website."
+					}
+				},
+				{
+					"name": "Create Announcement",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "page_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "language_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Important Announcement",
+									"type": "text"
+								},
+								{
+									"key": "body",
+									"value": "We are pleased to announce our new service offerings...",
+									"type": "text"
+								},
+								{
+									"key": "start_date",
+									"value": "2024-01-01T00:00:00",
+									"type": "text"
+								},
+								{
+									"key": "end_date",
+									"value": "2024-12-31T23:59:59",
+									"type": "text"
+								},
+								{
+									"key": "cover_image",
+									"type": "file",
+									"src": "",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/announcement/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "announcement", ""]
+						},
+						"description": "Create a new announcement with optional cover image."
+					}
+				},
+				{
+					"name": "Get Announcement by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/announcement/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "announcement", "1", ""]
+						},
+						"description": "Get specific announcement by ID."
+					}
+				},
+				{
+					"name": "Update Announcement",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Updated Announcement Title\",\n    \"body\": \"Updated announcement content...\",\n    \"start_date\": \"2024-01-01T00:00:00\",\n    \"end_date\": \"2024-12-31T23:59:59\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/announcement/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "announcement", "1", ""]
+						},
+						"description": "Update existing announcement."
+					}
+				},
+				{
+					"name": "Delete Announcement",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/announcement/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "announcement", "1", ""]
+						},
+						"description": "Delete an announcement."
+					}
+				}
+			],
+			"description": "Announcement management endpoints for time-bound announcements."
+		},
+		{
+			"name": "🏷️ Meta Tags Management",
+			"item": [
+				{
+					"name": "Get All Meta Tags",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/metatag/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "metatag", ""]
+						},
+						"description": "Get all meta tags for SEO optimization."
+					}
+				},
+				{
+					"name": "Create Meta Tag",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Homepage - My Awesome Website\",\n    \"description\": \"Welcome to our website where we provide excellent services and solutions for your business needs.\",\n    \"keywords\": \"business, services, solutions, website, company\",\n    \"page_id\": 1,\n    \"language_id\": 1,\n    \"website_id\": {{website_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/metatag/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "metatag", ""]
+						},
+						"description": "Create new meta tags for SEO optimization."
+					}
+				},
+				{
+					"name": "Get Meta Tag by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/metatag/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "metatag", "1"]
+						},
+						"description": "Get specific meta tag by ID."
+					}
+				},
+				{
+					"name": "Update Meta Tag",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Updated Page Title - My Website\",\n    \"description\": \"Updated description for better SEO ranking and user engagement.\",\n    \"keywords\": \"updated, keywords, seo, optimization\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/metatag/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "metatag", "1"]
+						},
+						"description": "Update existing meta tags."
+					}
+				},
+				{
+					"name": "Delete Meta Tag",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/metatag/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "metatag", "1", ""]
+						},
+						"description": "Delete meta tags."
+					}
+				}
+			],
+			"description": "Meta tags management for SEO optimization of pages."
+		},
+		{
+			"name": "📁 File Management",
+			"item": [
+				{
+					"name": "Access Media Files",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/media/example-image.jpg",
+							"host": ["{{base_url}}"],
+							"path": ["media", "example-image.jpg"]
+						},
+						"description": "Access uploaded media files. This endpoint serves static files."
+					}
+				},
+				{
+					"name": "Upload File (TinyFile)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": ""
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tinyfile/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tinyfile", ""]
+						},
+						"description": "Upload files through the TinyFile endpoint."
+					}
+				}
+			],
+			"description": "File management endpoints for uploading and accessing media files."
+		}
+	]
+} 

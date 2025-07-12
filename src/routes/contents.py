@@ -23,9 +23,9 @@ def page_content_update_form(language_id: int = Form(...), title: str = Form(...
     return PageContentUpdate(language_id=language_id, title=title, body=body, price=price)
 
 @router.post("/", response_model=PageContentCreate)
-async def create_page_content(page: PageContentCreate = Depends(page_content_form), cover_image: UploadFile = File(None), db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if cover_image:
-        page.cover_image = await crud_page_content.upload_cover_image(cover_image)
+async def create_page_content(page: PageContentCreate = Depends(page_content_form), cover_images: List[UploadFile] = File(None), db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if cover_images:
+        page.cover_images = await crud_page_content.upload_cover_images(cover_images)
 
     if current_user.is_superuser is False:
         page.website_id = current_user.websites[0].id
@@ -50,7 +50,7 @@ async def read_page_content(content_id: int, db: AsyncSession = Depends(get_db),
         language_id=page_content.language.id,
         title=page_content.title,
         body=page_content.body,
-        cover_image= page_content.cover_image
+        cover_images= page_content.cover_images or []
     )
 
 @router.get("/", response_model=PaginatedPageContentResponse)
@@ -74,7 +74,7 @@ async def read_page_contents(query: PageContentQueryParams = Depends(), db: Asyn
         "id": page.id,
         "title": page.title,
         "body": page.body,
-        "cover_image": page.cover_image,
+        "cover_images": page.cover_images or [],
         "page": page.page.name,
         "website": page.website.name,
         "language_code": page.language.code,
@@ -92,9 +92,9 @@ async def read_page_contents(query: PageContentQueryParams = Depends(), db: Asyn
     )
 
 @router.put("/{content_id}/", response_model=PageContentRead)
-async def update_page_content(content_id: int, page: PageContentUpdate = Depends(page_content_update_form), cover_image: UploadFile = File(None), db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if cover_image:
-        page.cover_image = await crud_page_content.upload_cover_image(cover_image, db)
+async def update_page_content(content_id: int, page: PageContentUpdate = Depends(page_content_update_form), cover_images: List[UploadFile] = File(None), db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if cover_images:
+        page.cover_images = await crud_page_content.upload_cover_images(cover_images)
 
     if current_user.is_superuser is False:
         page.website_id = current_user.websites[0].id

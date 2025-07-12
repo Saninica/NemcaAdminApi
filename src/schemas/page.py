@@ -27,7 +27,7 @@ class PageContentSchema(BaseModel):
     language_code: str
     title: str
     body: str
-    cover_image: Optional[str]
+    cover_images: Optional[List[str]]
 
     class Config:
         from_attributes = True
@@ -47,7 +47,7 @@ class PageContentCreate(BaseModel):
     title: str
     body: str
     price: Optional[float] = None
-    cover_image: Optional[str] = None
+    cover_images: Optional[List[str]] = None
 
 
 class PageContentUpdate(BaseModel):
@@ -57,7 +57,7 @@ class PageContentUpdate(BaseModel):
     title: str
     body: str
     price: Optional[float] = None
-    cover_image: Optional[str]
+    cover_images: Optional[List[str]]
 
 class PageContentRead(BaseModel):
     id: int
@@ -67,7 +67,7 @@ class PageContentRead(BaseModel):
     title: str
     body: str
     price: Optional[float] = None
-    cover_image: Optional[str]
+    cover_images: Optional[List[str]]
 
     class Config:
         from_attributes = True
@@ -80,7 +80,7 @@ class PageContentMultiple(BaseModel):
     title: str
     body: str
     price:  Optional[float] = None
-    cover_image: Optional[str]
+    cover_images: Optional[List[str]]
 
     class Config:
         from_attributes = True
