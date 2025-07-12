@@ -57,7 +57,7 @@ class PageContentUpdate(BaseModel):
     title: str
     body: str
     price: Optional[float] = None
-    cover_images: Optional[List[str]]
+    cover_images: Optional[List[str]] = None
 
 class PageContentRead(BaseModel):
     id: int
